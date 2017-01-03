@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <!-- The above 3 meta tags *must* come first in the head; any other head content must come *after* these tags -->
+
+    <title>Garage Door App</title>
+
+    <!-- Bootstrap -->
+    <link href="{{ url_for('static', filename='css/bootstrap.min.css') }}" rel="stylesheet">
+    <!-- Bootstrap theme -->
+    <link href="{{ url_for('static', filename='css/bootstrap-theme.min.css') }}" rel="stylesheet">
+
+    <!-- jQuery (necessary for Bootstrap's JavaScript plugins) -->
+    <script src="{{ url_for('static', filename='js/jquery-3.0.0.min.js') }}"></script>
+
+    <!-- Include all compiled plugins (below), or include individual files as needed -->
+    <script src="{{ url_for('static', filename='js/bootstrap.min.js') }}"></script>
+
+    <!-- WebApp Manifest -->
+    <link rel="manifest" href="{{ url_for('manifest') }}">
+
+    <!-- Favicon -->
+    <link href="{{ url_for('static', filename='img/favicon.ico') }}" rel="icon" type="image/x-icon" />
+
+    <!-- Script to refresh status of door -->
+    <script type="text/javascript">
+  	setInterval("$('#status_row').load('/' + ' #refresh_status_row');", 1000);
+  	</script>
+
+  </head>
+
+  <body>
+    <div class="jumbotron text-center">
+      <form name="input" action="/button">
+        <button type="submit" class="btn btn-lg btn-warning">Open / Close Garage Door</button>
+      </form>
+    </div>
+
+    <div class="container theme-showcase" role="main">
+        <div class="row" id="status_row">
+          <div id="refresh_status_row">
+            <div class="col-sm-6">
+              {% if state %}
+              <div class="panel panel-danger">
+                <div class="panel-heading">
+                  <h3 class="panel-title">Door Status</h3>
+                </div>
+                <div class="panel-body">Open</div>
+              </div>
+              {% else %}
+              <div class="panel panel-success">
+                <div class="panel-heading">
+                  <h3 class="panel-title">Door Status</h3>
+                </div>
+                <div class="panel-body">Closed</div>
+              </div>
+              {% endif %}
+            </div><!-- /.col-sm-6 -->
+            <div class="col-sm-6">
+              <div class="panel panel-primary">
+                <div class="panel-heading">
+                  <h3 class="panel-title">CPU Temperature</h3>
+                </div>
+                <div class="panel-body">{{ temp }}</div>
+              </div>
+            </div><!-- /.col-sm-6 -->
+          </div><!-- /.refresh_status_row -->
+        </div>
+
+        <div class="panel panel-primary">
+          <div class="panel-heading">
+            <h3 class="panel-title"><a href="/history">Event History (last 10 events)</a></h3>
+          </div>
+          <div class="panel-body">
+            <div class="col-md-6">
+              <table class="table table-striped">
+                <thead>
+                  <tr>
+                    <th>Date</th>
+                    <th>Time</th>
+                    <th>Event</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {% for row in range(10) %}
+                  <tr>
+                    {% for column in range(3) %}
+                    <td> {{ door_history[(events-row-1)][column] }} </td>
+                    {% endfor %}
+                  </tr>
+                  {% endfor %}
+                </tbody>
+              </table>
+              <form name="input" action="/history">
+                <button type="submit" class="btn btn btn-info">Full Log</button>
+              </form>
+            </div>
+          </div>
+        </div>
+
+      <div class="well">
+        <p style="color:grey">Garage Door Web Application created by <a href="http://parmeter.net/tech">Ben Parmeter</a>, copyright 2016.</p>
+        <p style="color:grey">For administration tasks <a href="/admin">click here.</a></p>
+      </div>
+    </div>
+
+  </body>
+</html>

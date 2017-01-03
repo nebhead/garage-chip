@@ -1,9 +1,9 @@
-# Garage-Pi
+# Garage-CHIP
 
-## Raspberry Pi based Garage Door Control / Status via Web Based Interface using Flask / Gunicorn / nginx
+## CHIP based Garage Door Control / Status via Web Based Interface using Flask / Gunicorn / nginx
 ##### Also uses Bootstrap (http://getbootstrap.com/)
 
-This project was inspired by Chris Driscoll's "Idiot's Guide to a Raspberry Pi Garage Door Opener" (http://www.driscocity.com/idiots-guide-to-a-raspberry-pi-garage-door-opener/).  I've replicated Chris' hardware setup almost exactly, save for the Raspberry Pi 2 (instead of the Model B).  I've considered swapping out with something lesser (i.e. a Pi Zero) but that's a project for another day.  
+This project was inspired by Chris Driscoll's "Idiot's Guide to a Raspberry Pi Garage Door Opener" (http://www.driscocity.com/idiots-guide-to-a-raspberry-pi-garage-door-opener/).  I've replicated Chris' hardware setup almost exactly, save for the NTC CHIP (instead of the Raspberry Pi Model B).  
 
 Instead of using the WebIO libraries that Chris uses, I decided to implement things a bit differently, providing a dynamic webUI with bootstrap and Flask.  
 
@@ -12,9 +12,9 @@ Initially this project used Flask's native WSGI services without Gunicorn or ngi
 ## Hardware Configuration
 See the parts list, hardware setup instructions here: (http://www.driscocity.com/idiots-guide-to-a-raspberry-pi-garage-door-opener/)
 
-### Raspberry Pi GPIO Mapping
-GPIO23 - Output Relay Control (Open / Close Garage Door)
-GPIO18 - Input for Magnetic Switch (Current State of Garage Door)
+### GPIO Mapping
+GPIO0 - Output Relay Control (Open / Close Garage Door)
+GPIO1 - Input for Magnetic Switch (Current State of Garage Door)
 
 ## Software Installation:
 ###NOTE: The install.sh script doesn't work properly.  Please follow the below instructions to install instead.
@@ -26,7 +26,7 @@ GPIO18 - Input for Magnetic Switch (Current State of Garage Door)
 
 >cd ~
 
->git clone https://github.com/nebhead/garage-pi
+>git clone https://github.com/nebhead/garage-chip
 
 >sudo pip install flask
 
@@ -42,9 +42,9 @@ GPIO18 - Input for Magnetic Switch (Current State of Garage Door)
 ### Configure Crontab for boot
 >sudo crontab -l > mycron
 
->echo "@reboot cd /home/pi/garage-chip && sudo sh boot.sh &" >> mycron
+>echo "@reboot cd /home/chip/garage-chip && sudo sh boot.sh &" >> mycron
 
->echo "0 0 1 * * cd /home/pi/garage-chip/logs && sh backup.sh" >> mycron
+>echo "0 0 1 * * cd /home/chip/garage-chip/logs && sh backup.sh" >> mycron
 
 >sudo crontab mycron
 

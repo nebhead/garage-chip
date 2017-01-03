@@ -18,22 +18,18 @@ import os
 import pickle
 import CHIP_IO.GPIO as GPIO
 
-GPIO.setup("XIO-P0", GPIO.OUT) # Setup Relay on GPIO0
-GPIO.output("XIO-P0", GPIO.HIGH) # Set Relay on GPIO0 to 1 (high)
-GPIO.setup("XIO-P1", GPIO.IN) # Setup Magnetic Switch on GPIO1  (set pull down)
-
-
-# GPIO.setup(18, GPIO.IN, pull_up_down=GPIO.PUD_DOWN) #Switch
-
+GPIO.setup("CSID0", GPIO.OUT) # Setup Relay on GPIO0
+GPIO.output("CSID0", GPIO.HIGH) # Set Relay on GPIO0 to 1 (high)
+GPIO.setup("CSID1", GPIO.IN) # Setup Magnetic Switch on GPIO1  (set pull down)
 
 def ToggleRelay():
 	# *****************************************
 	# Function to Toggle Relay (and open/close the garage door)
 	# *****************************************
 	# Insert code to push button here
-	GPIO.output("XIO-P0", GPIO.LOW) 	#Turn on Relay
+	GPIO.output("CSID0", GPIO.LOW) 	#Turn on Relay
 	time.sleep(0.5)			#Wait for 0.5s
-	GPIO.output("XIO-P0", GPIO.HIGH)	#Turn off Relay
+	GPIO.output("CSID0", GPIO.HIGH)	#Turn off Relay
 
 def ReadStates():
 	# *****************************************
@@ -71,14 +67,14 @@ def CheckDoorState(states):
 	# Function run from Readstates()
 	# *****************************************
 
-	if (GPIO.input("XIO-P1") == True and states[1] != 'on'):
+	if (GPIO.input("CSID1") == True and states[1] != 'on'):
 		states[1] = 'on'
 		now = str(datetime.datetime.now())
 		doorhistory = open("events.log", "a")
 		doorhistory.write(now + " Door_Opened\n")
 		doorhistory.close()
 		time.sleep(1)
-	if (GPIO.input("XIO-P1") == False and states[1] != 'off'):
+	if (GPIO.input("CSID1") == False and states[1] != 'off'):
 		states[1] = 'off'
 		now = str(datetime.datetime.now())
 		doorhistory = open("events.log", "a")

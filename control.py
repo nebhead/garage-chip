@@ -18,18 +18,24 @@ import os
 import pickle
 import CHIP_IO.GPIO as GPIO
 
-GPIO.setup("CSID0", GPIO.OUT) # Setup Relay on GPIO0
-GPIO.output("CSID0", GPIO.HIGH) # Set Relay on GPIO0 to 1 (high)
+GPIO.setup("CSID0", GPIO.OUT) # Setup Relay IN1 on GPIO0
+GPIO.output("CSID0", GPIO.LOW) # Set Relay IN1 on GPIO0 to 0 (LOW)
+GPIO.setup("CSID2", GPIO.OUT) # Setup Relay IN2 on GPIO2
+GPIO.output("CSID2", GPIO.LOW) # Set Relay IN2 on GPIO2 to 0 (LOW)
+
+
 GPIO.setup("CSID1", GPIO.IN) # Setup Magnetic Switch on GPIO1  (set pull down)
+
+
 
 def ToggleRelay():
 	# *****************************************
 	# Function to Toggle Relay (and open/close the garage door)
 	# *****************************************
 	# Insert code to push button here
-	GPIO.output("CSID0", GPIO.LOW) 	#Turn on Relay
+	GPIO.output("CSID0", GPIO.HIGH) 	#Turn on Relay
 	time.sleep(0.5)			#Wait for 0.5s
-	GPIO.output("CSID0", GPIO.HIGH)	#Turn off Relay
+	GPIO.output("CSID0", GPIO.LOW)	#Turn off Relay
 
 def ReadStates():
 	# *****************************************

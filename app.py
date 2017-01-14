@@ -6,10 +6,6 @@ import pickle
 
 app = Flask(__name__)
 
-def checkcputemp():
-
-	return "Not Implemented"
-
 def readeventhistory(door_history, events):
 	# Read all lines of events.log into an list(array)
 	try:
@@ -64,7 +60,6 @@ def WriteStates(states):
 
 @app.route('/')
 def index():
-	temp = checkcputemp()
 
 	door_history = []
 	events = 0
@@ -77,11 +72,10 @@ def index():
 	else:
 		door_state = False
 
-	return render_template('index.html', state=door_state, temp=temp, events=events, door_history=door_history)
+	return render_template('index.html', state=door_state, events=events, door_history=door_history)
 
 @app.route('/button')
 def button():
-	temp = checkcputemp()
 
 	states = ReadStates()
 	states[0] = 'on'  		# Button pressed - Set state to 'on'
@@ -96,7 +90,7 @@ def button():
 	else:
 		door_state = False
 
-	return render_template('index.html', state=door_state, temp=temp, events=events, door_history=door_history)
+	return render_template('index.html', state=door_state, events=events, door_history=door_history)
 
 @app.route('/history')
 def history():
@@ -129,15 +123,27 @@ def history():
 @app.route('/admin')
 def admin(action=None):
 	if action == 'reboot':
-		os.system("sudo shutdown -r now")
-		return 'Rebooting...'
+		#Show Reboot Splash
+		return render_template('shutdown.html', action=action)
+
+	if action == 'reboot-now':
+		os.system("sudo reboot")
+		return 'See you tomorrow!'
+
 	if action == 'shutdown':
+		#Show Shutdown Splash
+		return render_template('shutdown.html', action=action)
+		#return 'Shutting Down...'
+
+	if action == 'shutdown-now':
 		os.system("sudo shutdown -h now")
-		return 'Shutting Down...'
+		return 'Peace.'
 
-	temp = checkcputemp()
+	uptime = os.popen('uptime').readline()
 
-	return render_template('admin.html', temp=temp, action=action)
+	cpuinfo = os.popen('cat /proc/cpuinfo').readlines()
+
+	return render_template('admin.html', action=action, uptime=uptime, cpuinfo=cpuinfo)
 
 @app.route('/manifest')
 def manifest():

@@ -1,7 +1,7 @@
 #!/bin/sh
 
 NOW=$(date +"%Y-%m-%d")
-LOGFILE="/home/pi/garage-chip/logs/backuplog-$NOW.log"
+LOGFILE="/home/chip/garage-chip/logs/backuplog-$NOW.log"
 
-mv /home/pi/garage-pi/events.log $LOGFILE
-cp /home/pi/garage-pi/events.log.template /home/pi/garage-pi/events.log
+mv /home/chip/garage-chip/events.log $LOGFILE
+cp /home/chip/garage-chip/events.log.template /home/chip/garage-chip/events.log

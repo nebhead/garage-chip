@@ -5,13 +5,7 @@
     <meta charset="utf-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    {% if "shutdown" in action %}
-      <meta http-equiv="refresh" content="3;url=/admin/shutdown-now" />
-    {% elif "reboot" in action %}
-      <meta http-equiv="refresh" content="3;url=/admin/reboot-now" />
-    {% else %}
-      <meta http-equiv="refresh" content="3;url=/" />
-    {% endif %}
+    <meta http-equiv="refresh" content="60;url=/" />
 
     <!-- The above 3 meta tags *must* come first in the head; any other head content must come *after* these tags -->
     <title>Garage Door App</title>

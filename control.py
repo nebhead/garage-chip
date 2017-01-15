@@ -15,7 +15,7 @@
 import time
 import datetime
 import os
-import pickle
+import json
 import CHIP_IO.GPIO as GPIO
 
 GPIO.setup("CSID0", GPIO.OUT) # Setup Relay IN1 on GPIO0
@@ -23,10 +23,7 @@ GPIO.output("CSID0", GPIO.LOW) # Set Relay IN1 on GPIO0 to 0 (LOW)
 GPIO.setup("CSID2", GPIO.OUT) # Setup Relay IN2 on GPIO2
 GPIO.output("CSID2", GPIO.LOW) # Set Relay IN2 on GPIO2 to 0 (LOW)
 
-
 GPIO.setup("CSID1", GPIO.IN) # Setup Magnetic Switch on GPIO1  (set pull down)
-
-
 
 def ToggleRelay():
 	# *****************************************
@@ -42,30 +39,39 @@ def ReadStates():
 	# Read Switch States from File
 	# *****************************************
 
-    # Start with an empty states list
-	states = []
-
-	# Read all lines of states.dat into an list(array)
+	# Read all lines of states.json into an list(array)
 	try:
-		with open('states.dat', 'rb') as statesfile:
-			states = pickle.load(statesfile)
-			statesfile.close()
-			states = CheckDoorState(states)
-	# If file not found error, then create states.dat file
+		json_data_file = open("states.json", "r")
+		json_data_string = json_data_file.read()
+		states = json.loads(json_data_string)
+		json_data_file.close()
 	except(IOError, OSError):
-		states = ['off', 'off']
-		states = CheckDoorState(states)
+		# Issue with reading states JSON, so create one/write new one
+		states = {}
+
+		states['controls'] = {
+			'shutdown': False, # Shutdown the system
+			'reboot': False # Reboot the system
+		}
+
+		states['inputs'] = {
+			'switch': False # Magnetic Switch
+		}
+
+		states['outputs'] = {
+			'button': False # Relay Button
+		}
 		WriteStates(states)
 
 	return(states)
 
 def WriteStates(states):
 	# *****************************************
-	# Write Switch State Values to File
+	# Write all control states to JSON file
 	# *****************************************
-	with open('states.dat', 'wb') as statesfile:
-		pickle.dump(states, statesfile, protocol=2)
-		statesfile.close()
+	json_data_string = json.dumps(states)
+	with open("states.json", 'w') as settings_file:
+	    settings_file.write(json_data_string)
 
 def CheckDoorState(states):
 	# *****************************************
@@ -73,15 +79,17 @@ def CheckDoorState(states):
 	# Function run from Readstates()
 	# *****************************************
 
-	if (GPIO.input("CSID1") == True and states[1] != 'on'):
-		states[1] = 'on'
+	if (GPIO.input("CSID1") == True and states['inputs']['switch'] != True):
+		states['inputs']['switch'] = True
+		WriteStates(states)
 		now = str(datetime.datetime.now())
 		doorhistory = open("events.log", "a")
 		doorhistory.write(now + " Door_Opened\n")
 		doorhistory.close()
 		time.sleep(1)
-	if (GPIO.input("CSID1") == False and states[1] != 'off'):
-		states[1] = 'off'
+	if (GPIO.input("CSID1") == False and states['inputs']['switch'] != False):
+		states['inputs']['switch'] = False
+		WriteStates(states)
 		now = str(datetime.datetime.now())
 		doorhistory = open("events.log", "a")
 		doorhistory.write(now + " Door_Closed\n")
@@ -94,23 +102,41 @@ def CheckDoorState(states):
 # *****************************************
 
 # First Init List Switch States
-states = ['off','off']
-tempstates = ['off', 'off']
 
 while True:
-	tempstates = ReadStates()
-	if (states != tempstates):
-		states = tempstates
-		if (states[0] == 'on'):
-			ToggleRelay()
-
-			now = str(datetime.datetime.now())
-			doorhistory = open("events.log", "a")
-			doorhistory.write(now + " Button_Pressed\n")
-			doorhistory.close()
-
-			states[0] = 'off'
+	states = CheckDoorState(ReadStates())
+	if (states['controls']['reboot'] == True):
+		# Set State Controls to False
+		states['controls']['reboot'] = False
+		# Write State Back to JSON
 		WriteStates(states)
+		# Delay 5 Seconds
+		time.sleep(3)
+		# Send Reboot Command
+		os.system("sudo reboot")
+
+	elif (states['controls']['shutdown'] == True):
+		# Set State Controls to False
+		states['controls']['shutdown'] = False
+		# Write State Back to JSON
+		WriteStates(states)
+		# Delay 5 Seconds
+		time.sleep(3)
+		# Send Shutdown Halt Command
+		os.system("sudo shutdown -h now")
+
+	elif (states['outputs']['button'] == True):
+
+		now = str(datetime.datetime.now())
+		doorhistory = open("events.log", "a")
+		doorhistory.write(now + " Button_Pressed\n")
+		doorhistory.close()
+
+		ToggleRelay()
+
+		states['outputs']['button'] = False
+		WriteStates(states)
+
 	time.sleep(0.25)
 #except:
 #	print("Exception.  Exiting.")

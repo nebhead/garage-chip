@@ -2,7 +2,7 @@ from flask import Flask, render_template, make_response
 import time
 import datetime
 import os
-import pickle
+import json
 
 app = Flask(__name__)
 
@@ -35,28 +35,40 @@ def ReadStates():
 	# Read Switch States from File
 	# *****************************************
 
-    # Start with an empty states list
-	states = []
-
-	# Read all lines of states.dat into an list(array)
+	# Read all lines of states.json into an list(array)
 	try:
-		with open('states.dat', 'rb') as statesfile:
-			states = pickle.load(statesfile)
-			statesfile.close()
-	# If file not found error, then create states.dat file
+		json_data_file = open("states.json", "r")
+		json_data_string = json_data_file.read()
+		states = json.loads(json_data_string)
+		json_data_file.close()
 	except(IOError, OSError):
-		states = ['off', 'off']
+		# Issue with reading states JSON, so create one/write new one
+		states = {}
+
+		states['controls'] = {
+			'shutdown': False, # Shutdown the system
+			'reboot': False # Reboot the system
+		}
+
+		states['inputs'] = {
+			'switch': False # Magnetic Switch
+		}
+
+		states['outputs'] = {
+			'button': False # Relay Button
+		}
 		WriteStates(states)
 
 	return(states)
 
 def WriteStates(states):
 	# *****************************************
-	# Write Switch State Values to File
+	# Write all control states to JSON file
 	# *****************************************
-	with open('states.dat', 'wb') as statesfile:
-		pickle.dump(states, statesfile, protocol=2)
-		statesfile.close()
+	json_data_string = json.dumps(states)
+	with open("states.json", 'w') as settings_file:
+	    settings_file.write(json_data_string)
+
 
 @app.route('/')
 def index():
@@ -67,7 +79,7 @@ def index():
 
 	states = ReadStates()
 
-	if(states[1] == 'on'):
+	if(states['inputs']['switch'] == True):
 		door_state = True
 	else:
 		door_state = False
@@ -77,20 +89,15 @@ def index():
 @app.route('/button')
 def button():
 
-	states = ReadStates()
-	states[0] = 'on'  		# Button pressed - Set state to 'on'
-	WriteStates(states)		# Write button press to file
-
 	door_history = []
 	events = 0
 	readeventhistory(door_history, events)
 
-	if(states[1] == 'on'):
-		door_state = True
-	else:
-		door_state = False
+	states = ReadStates()
+	states['outputs']['button'] = True  		# Button pressed - Set state to 'on'
+	WriteStates(states)		# Write button press to file
 
-	return render_template('index.html', state=door_state, events=events, door_history=door_history)
+	return render_template('button.html')
 
 @app.route('/history')
 def history():
@@ -122,22 +129,19 @@ def history():
 @app.route('/admin/<action>')
 @app.route('/admin')
 def admin(action=None):
+	states = ReadStates()
+
 	if action == 'reboot':
+		states['controls']['reboot'] = True
+		WriteStates(states)
 		#Show Reboot Splash
 		return render_template('shutdown.html', action=action)
 
-	if action == 'reboot-now':
-		os.system("sudo reboot")
-		return 'See you tomorrow!'
-
 	if action == 'shutdown':
+		states['controls']['shutdown'] = True
+		WriteStates(states)
 		#Show Shutdown Splash
 		return render_template('shutdown.html', action=action)
-		#return 'Shutting Down...'
-
-	if action == 'shutdown-now':
-		os.system("sudo shutdown -h now")
-		return 'Peace.'
 
 	uptime = os.popen('uptime').readline()
 

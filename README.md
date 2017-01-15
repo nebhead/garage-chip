@@ -13,11 +13,15 @@ Initially this project used Flask's native WSGI services without Gunicorn or ngi
 See the parts list, hardware setup instructions here: (http://www.driscocity.com/idiots-guide-to-a-raspberry-pi-garage-door-opener/)
 
 ### GPIO Mapping
-GPIO0 - Output Relay Control (Open / Close Garage Door)
-GPIO1 - Input for Magnetic Switch (Current State of Garage Door)
+CSID0 - Output Relay Control (Open / Close Garage Door)
+CSID1 - Input for Magnetic Switch (Current State of Garage Door)
+CSID2 - Output Relay Control Gate (Prevents spurious open/close events during power-on, shutdown and reboot cycles)
 
 ## Software Installation:
 ###NOTE: The install.sh script doesn't work properly.  Please follow the below instructions to install instead.
+
+### Todo Setup Dedicated IP on Router (based on MACID/Hostname)
+### Todo Install Locale
 
 ### Install Python PIP, Flask, Gunicorn, nginx
 >sudo apt-get update

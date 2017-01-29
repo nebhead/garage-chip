@@ -1,4 +1,4 @@
-from flask import Flask, render_template, make_response
+from flask import Flask, request, render_template, make_response
 import time
 import datetime
 import os
@@ -45,11 +45,6 @@ def ReadStates():
 		# Issue with reading states JSON, so create one/write new one
 		states = {}
 
-		states['controls'] = {
-			'shutdown': False, # Shutdown the system
-			'reboot': False # Reboot the system
-		}
-
 		states['inputs'] = {
 			'switch': False # Magnetic Switch
 		}
@@ -69,6 +64,43 @@ def WriteStates(states):
 	with open("states.json", 'w') as settings_file:
 	    settings_file.write(json_data_string)
 
+def ReadSettings():
+	# *****************************************
+	# Read Switch States from File
+	# *****************************************
+
+	# Read all lines of states.json into an list(array)
+	try:
+		json_data_file = open("settings.json", "r")
+		json_data_string = json_data_file.read()
+		settings = json.loads(json_data_string)
+		json_data_file.close()
+	except(IOError, OSError):
+		# Issue with reading states JSON, so create one/write new one
+		settings = {}
+
+		settings['email'] = {
+			'ToEmail': 'your_to_email', # E-mail address to send notification to
+			'FromEmail': 'your_from_email', # E-mail address to log into system
+			'Password' : 'your_password', # Password
+			'SMTPServer' : 'smtp.gmail.com', # SMTP Server Name
+			'SMTPPort' : 587 # SMTP Port
+			}
+
+		settings['notification'] = {
+			'minutes': 0 # Magnetic Switch
+		}
+		WriteSettings(settings)
+
+	return(settings)
+
+def WriteSettings(settings):
+	# *****************************************
+	# Write all control states to JSON file
+	# *****************************************
+	json_data_string = json.dumps(settings)
+	with open("settings.json", 'w') as settings_file:
+	    settings_file.write(json_data_string)
 
 @app.route('/')
 def index():
@@ -126,28 +158,69 @@ def history():
 
 	return render_template('door-log.html', door_history=door_history, events=events)
 
-@app.route('/admin/<action>')
-@app.route('/admin')
+
+@app.route('/admin/<action>', methods=['POST','GET'])
+@app.route('/admin', methods=['POST','GET'])
 def admin(action=None):
 	states = ReadStates()
+	settings = ReadSettings()
 
 	if action == 'reboot':
-		states['controls']['reboot'] = True
-		WriteStates(states)
+		# event = "Admin_Reboot"
+		# WriteLog(event)
+		os.system("sleep 3 && sudo reboot &")
+
 		#Show Reboot Splash
 		return render_template('shutdown.html', action=action)
 
 	if action == 'shutdown':
-		states['controls']['shutdown'] = True
-		WriteStates(states)
+		# event = "Admin_Shutdown"
+		# WriteLog(event)
+		os.system("sleep 3 && sudo shutdown -h now &")
+
 		#Show Shutdown Splash
 		return render_template('shutdown.html', action=action)
+
+	if (request.method == 'POST') and (action == 'settings'):
+		response = request.form
+
+		if('from_email' in response):
+			if(response['from_email']!=''):
+				print("from_email: " + response['from_email'])
+				settings['email']['FromEmail'] = response['from_email']
+
+		if('to_email' in response):
+			if(response['to_email']!=''):
+				print("to_email: " + response['to_email'])
+				settings['email']['ToEmail'] = response['to_email']
+
+		if('server' in response):
+			if(response['server']!=''):
+				print("Server: " + response['server'])
+				settings['email']['SMTPServer'] = response['server']
+
+		if('port' in response):
+			if(response['port']!=''):
+				print("Port: " + response['port'])
+				settings['email']['SMTPPort'] = int(response['port'])
+
+		if('password' in response):
+			if(response['password']!=''):
+				print("password: " + response['password'])
+				settings['email']['Password'] = response['password']
+
+		if('timeout' in response):
+			if(response['timeout']!=''):
+				print("Timeout: " + response['timeout'])
+				settings['notification']['minutes'] = int(response['timeout'])
+
+		WriteSettings(settings)
 
 	uptime = os.popen('uptime').readline()
 
 	cpuinfo = os.popen('cat /proc/cpuinfo').readlines()
 
-	return render_template('admin.html', action=action, uptime=uptime, cpuinfo=cpuinfo)
+	return render_template('admin.html', action=action, uptime=uptime, cpuinfo=cpuinfo, settings=settings)
 
 @app.route('/manifest')
 def manifest():
@@ -156,4 +229,4 @@ def manifest():
     return res
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0')
+    app.run(host='0.0.0.0') # use ,debug=True for debug mode

@@ -2,11 +2,6 @@ import json
 
 states = {}
 
-states['controls'] = {
-	'shutdown': False, # Shutdown the system
-	'reboot': False # Reboot the system
-}
-
 states['inputs'] = {
 	'switch': False # Magnetic Switch
 }

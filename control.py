@@ -54,7 +54,7 @@ def SendNotification(settings):
 	except():
 	    print("Failed.")
 
-    return()
+    	return()
 
 def ToggleRelay():
 	# *****************************************

@@ -40,9 +40,8 @@ def SendNotification(settings):
 	    msg['From'] = fromaddr
 	    msg['To'] = toaddr
 	    msg['Subject'] = "GarageCHIP: Door Open for " + str(settings['notification']['minutes']) + " Minutes"
-
-		now = datetime.datetime.now()
-		body = "GarageCHIP wants you to know that your garage door has been open for " + str(settings['notification']['minutes']) + " minutes at " + str(now)
+	    now = datetime.datetime.now()
+	    body = "GarageCHIP wants you to know that your garage door has been open for " + str(settings['notification']['minutes']) + " minutes at " + str(now)
 
 	    msg.attach(MIMEText(body, 'plain'))
 
@@ -53,7 +52,7 @@ def SendNotification(settings):
 	    server.sendmail(fromaddr, toaddr, text)
 	    server.quit()
 	except():
-		print("Failed.")
+	    print("Failed.")
 
     return()
 

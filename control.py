@@ -17,6 +17,9 @@ import datetime
 import os
 import json
 import CHIP_IO.GPIO as GPIO
+import smtplib
+from email.MIMEMultipart import MIMEMultipart
+from email.MIMEText import MIMEText
 
 GPIO.setup("CSID0", GPIO.OUT) # Setup Relay IN1 on GPIO0
 GPIO.output("CSID0", GPIO.LOW) # Set Relay IN1 on GPIO0 to 0 (LOW)
@@ -24,6 +27,34 @@ GPIO.setup("CSID2", GPIO.OUT) # Setup Relay IN2 on GPIO2
 GPIO.output("CSID2", GPIO.LOW) # Set Relay IN2 on GPIO2 to 0 (LOW)
 
 GPIO.setup("CSID1", GPIO.IN) # Setup Magnetic Switch on GPIO1  (set pull down)
+
+timer_start = 0 # Initialize timer_start variable, set to 0
+
+def SendNotification(settings):
+
+	try:
+	    fromaddr = settings['email']['FromEmail']
+	    toaddr = settings['email']['ToEmail']
+
+	    msg = MIMEMultipart()
+	    msg['From'] = fromaddr
+	    msg['To'] = toaddr
+	    msg['Subject'] = "GarageCHIP: Door Open for " + str(settings['notification']['minutes']) + " Minutes"
+	    now = datetime.datetime.now()
+	    body = "GarageCHIP wants you to know that your garage door has been open for " + str(settings['notification']['minutes']) + " minutes at " + str(now)
+
+	    msg.attach(MIMEText(body, 'plain'))
+
+	    server = smtplib.SMTP(settings['email']['SMTPServer'], settings['email']['SMTPPort'])
+	    server.starttls()
+	    server.login(fromaddr, settings['email']['Password'])
+	    text = msg.as_string()
+	    server.sendmail(fromaddr, toaddr, text)
+	    server.quit()
+	except():
+	    print("Failed.")
+
+    	return()
 
 def ToggleRelay():
 	# *****************************************
@@ -49,11 +80,6 @@ def ReadStates():
 		# Issue with reading states JSON, so create one/write new one
 		states = {}
 
-		states['controls'] = {
-			'shutdown': False, # Shutdown the system
-			'reboot': False # Reboot the system
-		}
-
 		states['inputs'] = {
 			'switch': False # Magnetic Switch
 		}
@@ -73,11 +99,50 @@ def WriteStates(states):
 	with open("states.json", 'w') as settings_file:
 	    settings_file.write(json_data_string)
 
-def CheckDoorState(states):
+def ReadSettings():
+	# *****************************************
+	# Read Settings from File
+	# *****************************************
+
+	# Read all lines of settings.json into an list(array)
+	try:
+		json_data_file = open("settings.json", "r")
+		json_data_string = json_data_file.read()
+		settings = json.loads(json_data_string)
+		json_data_file.close()
+	except(IOError, OSError):
+		# Issue with reading settings JSON, so create one/write new one
+		settings = {}
+
+		settings['email'] = {
+			'ToEmail': 'your_to_email', # E-mail address to send notification to
+			'FromEmail': 'your_from_email', # E-mail address to log into system
+			'Password' : 'your_password', # Password
+			'SMTPServer' : 'smtp.gmail.com', # SMTP Server Name
+			'SMTPPort' : 587 # SMTP Port
+			}
+
+		settings['notification'] = {
+			'minutes': 0 # Minutes
+		}
+		WriteSettings(settings)
+
+	return(settings)
+
+def WriteSettings(settings):
+	# *****************************************
+	# Write all settings to JSON file
+	# *****************************************
+	json_data_string = json.dumps(settings)
+	with open("settings.json", 'w') as settings_file:
+	    settings_file.write(json_data_string)
+
+def CheckDoorState(states, settings):
 	# *****************************************
 	# Check switch state Open / Closed
 	# Function run from Readstates()
 	# *****************************************
+	global timer_start
 
 	if (GPIO.input("CSID1") == True and states['inputs']['switch'] != True):
 		states['inputs']['switch'] = True
@@ -86,6 +151,8 @@ def CheckDoorState(states):
 		doorhistory = open("events.log", "a")
 		doorhistory.write(now + " Door_Opened\n")
 		doorhistory.close()
+		if(settings['notification']['minutes'] > 0):
+			timer_start = time.time() # Set start time for timer
 		time.sleep(1)
 	if (GPIO.input("CSID1") == False and states['inputs']['switch'] != False):
 		states['inputs']['switch'] = False
@@ -94,6 +161,7 @@ def CheckDoorState(states):
 		doorhistory = open("events.log", "a")
 		doorhistory.write(now + " Door_Closed\n")
 		doorhistory.close()
+		timer_start = 0
 		time.sleep(1)
 	return(states)
 
@@ -104,28 +172,15 @@ def CheckDoorState(states):
 # First Init List Switch States
 
 while True:
-	states = CheckDoorState(ReadStates())
-	if (states['controls']['reboot'] == True):
-		# Set State Controls to False
-		states['controls']['reboot'] = False
-		# Write State Back to JSON
-		WriteStates(states)
-		# Delay 5 Seconds
-		time.sleep(3)
-		# Send Reboot Command
-		os.system("sudo reboot")
+	settings = ReadSettings()
+	states = CheckDoorState(ReadStates(),settings)
 
-	elif (states['controls']['shutdown'] == True):
-		# Set State Controls to False
-		states['controls']['shutdown'] = False
-		# Write State Back to JSON
-		WriteStates(states)
-		# Delay 5 Seconds
-		time.sleep(3)
-		# Send Shutdown Halt Command
-		os.system("sudo shutdown -h now")
+	if (timer_start > 0):
+		if(time.time() > (timer_start + settings['notification']['minutes'])):
+			SendNotification(settings)
+			timer_start = 0 # Stop the timer, stop from sending another notification
 
-	elif (states['outputs']['button'] == True):
+	if (states['outputs']['button'] == True):
 
 		now = str(datetime.datetime.now())
 		doorhistory = open("events.log", "a")
@@ -138,7 +193,5 @@ while True:
 		WriteStates(states)
 
 	time.sleep(0.25)
-#except:
-#	print("Exception.  Exiting.")
-#	GPIO.cleanup()
-#	exit()
+
+exit()

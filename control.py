@@ -176,7 +176,7 @@ while True:
 	states = CheckDoorState(ReadStates(),settings)
 
 	if (timer_start > 0):
-		if(time.time() > (timer_start + settings['notification']['minutes'])):
+		if(time.time() > (timer_start + (settings['notification']['minutes']*60))):
 			SendNotification(settings)
 			timer_start = 0 # Stop the timer, stop from sending another notification
 

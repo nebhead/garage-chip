@@ -109,16 +109,18 @@
                 {% for row in range(10) %}
                 <tr>
                   {% for column in range(3) %}
-                  <td> {{ door_history[(events-row-1)][column] }} </td>
+                  <td> {{ door_history[(events-10+row)][column] }} </td>
                   {% endfor %}
                 </tr>
                 {% endfor %}
               </tbody>
             </table>
-            <form name="input" action="/history">
-              <button type="submit" class="btn btn btn-info">Full Log</button>
-            </form>
           </div>
+        </div>
+        <div class="panel-footer">
+          <form name="input" action="/history">
+            <button type="submit" class="btn btn-default">Full Event Logs</button>
+          </form>
         </div>
       </div>
 

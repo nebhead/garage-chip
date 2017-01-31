@@ -137,6 +137,20 @@ def WriteSettings(settings):
 	with open("settings.json", 'w') as settings_file:
 	    settings_file.write(json_data_string)
 
+def WriteLog(event):
+	# *****************************************
+	# Function: WriteLog
+	# Input: str event
+	# Description: Write event to event.log
+	#  Event should be a string.
+	# *****************************************
+	now = str(datetime.datetime.now())
+	now = now[0:19] # Truncate the microseconds
+
+	logfile = open("events.log", "a")
+	logfile.write(now + ' ' + event + '\n')
+	logfile.close()
+
 def CheckDoorState(states, settings):
 	# *****************************************
 	# Check switch state Open / Closed
@@ -147,20 +161,16 @@ def CheckDoorState(states, settings):
 	if (GPIO.input("CSID1") == True and states['inputs']['switch'] != True):
 		states['inputs']['switch'] = True
 		WriteStates(states)
-		now = str(datetime.datetime.now())
-		doorhistory = open("events.log", "a")
-		doorhistory.write(now + " Door_Opened\n")
-		doorhistory.close()
+		event = "Door Opened."
+		WriteLog(event)
 		if(settings['notification']['minutes'] > 0):
 			timer_start = time.time() # Set start time for timer
 		time.sleep(1)
 	if (GPIO.input("CSID1") == False and states['inputs']['switch'] != False):
 		states['inputs']['switch'] = False
 		WriteStates(states)
-		now = str(datetime.datetime.now())
-		doorhistory = open("events.log", "a")
-		doorhistory.write(now + " Door_Closed\n")
-		doorhistory.close()
+		event = "Door Closed."
+		WriteLog(event)
 		timer_start = 0
 		time.sleep(1)
 	return(states)
@@ -180,12 +190,13 @@ while True:
 			SendNotification(settings)
 			timer_start = 0 # Stop the timer, stop from sending another notification
 
+			event = "Door open for " + str(settings['notification']['minutes']) + " minutes.  Notification sent."
+			WriteLog(event)
+
 	if (states['outputs']['button'] == True):
 
-		now = str(datetime.datetime.now())
-		doorhistory = open("events.log", "a")
-		doorhistory.write(now + " Button_Pressed\n")
-		doorhistory.close()
+		event = "Button Pressed."
+		WriteLog(event)
 
 		ToggleRelay()
 

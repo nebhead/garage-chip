@@ -6,29 +6,56 @@ import json
 
 app = Flask(__name__)
 
-def readeventhistory(door_history, events):
+def ReadLog():
+	# *****************************************
+	# Function: ReadLog
+	# Input: none
+	# Output: event_list, num_events
+	# Description: Read event.log and populate
+	#  an array of events.
+	# *****************************************
+
 	# Read all lines of events.log into an list(array)
 	try:
-		with open('events.log') as event_log:
-			event_lines = event_log.readlines()
+		with open('events.log') as event_file:
+			event_lines = event_file.readlines()
+			event_file.close()
 	# If file not found error, then create events.log file
 	except(IOError, OSError):
-		event_log = open('events.log', "w")
-		event_log.close()
+		event_file = open('events.log', "w")
+		event_file.close()
 		event_lines = []
 
+	# Initialize event_list list
+	event_list = []
+
 	# Get number of events
-	events = len(event_lines)
+	num_events = len(event_lines)
 
-	# Explode/Split lines into separate elements
-	for x in range(events):
-		door_history.append(event_lines[x].split(" "))
+	for x in range(num_events):
+		event_list.append(event_lines[x].split(" ",2))
 
-	# Error handling if number of events is less than 10, fill array with empty
-	if (events < 10):
-		for line in range((10-events)):
-			door_history.append(["empty","empty","empty"])
-		events = 10
+	# Error handling if number of events is less than 20, fill array with empty
+	if (num_events < 10):
+		for line in range((10-num_events)):
+			event_list.append(["--------","--:--:--","---"])
+		num_events = 10
+
+	return(event_list, num_events)
+
+def WriteLog(event):
+	# *****************************************
+	# Function: WriteLog
+	# Input: str event
+	# Description: Write event to event.log
+	#  Event should be a string.
+	# *****************************************
+	now = str(datetime.datetime.now())
+	now = now[0:19] # Truncate the microseconds
+
+	logfile = open("events.log", "a")
+	logfile.write(now + ' ' + event + '\n')
+	logfile.close()
 
 def ReadStates():
 	# *****************************************
@@ -104,10 +131,7 @@ def WriteSettings(settings):
 
 @app.route('/')
 def index():
-
-	door_history = []
-	events = 0
-	readeventhistory(door_history, events)
+	door_history, events = ReadLog()
 
 	states = ReadStates()
 
@@ -121,10 +145,6 @@ def index():
 @app.route('/button')
 def button():
 
-	door_history = []
-	events = 0
-	readeventhistory(door_history, events)
-
 	states = ReadStates()
 	states['outputs']['button'] = True  		# Button pressed - Set state to 'on'
 	WriteStates(states)		# Write button press to file
@@ -133,28 +153,8 @@ def button():
 
 @app.route('/history')
 def history():
-	# Read all lines of events.log into an list(array)
-	try:
-		with open('events.log') as event_log:
-			event_lines = event_log.readlines()
-	# If file not found error, then create events.log file
-	except(IOError, OSError):
-		event_log = open('events.log', "w")
-		event_log.close()
-		event_lines = []
 
-	# Initialize/Clear the array for event data
-	door_history = []
-	events = len(event_lines)
-
-	# Explode/Split lines into separate elements
-	if (events == 0):
-		empty_list = ["empty","empty","empty"]
-		door_history.append(empty_list)
-		events = 1
-	else:
-		for x in range(events):
-			door_history.append(event_lines[x].split(" "))
+	door_history, events = ReadLog()
 
 	return render_template('door-log.html', door_history=door_history, events=events)
 
@@ -166,16 +166,16 @@ def admin(action=None):
 	settings = ReadSettings()
 
 	if action == 'reboot':
-		# event = "Admin_Reboot"
-		# WriteLog(event)
+		event = "Reboot Requested."
+		WriteLog(event)
 		os.system("sleep 3 && sudo reboot &")
 
 		#Show Reboot Splash
 		return render_template('shutdown.html', action=action)
 
 	if action == 'shutdown':
-		# event = "Admin_Shutdown"
-		# WriteLog(event)
+		event = "Shutdown Requested."
+		WriteLog(event)
 		os.system("sleep 3 && sudo shutdown -h now &")
 
 		#Show Shutdown Splash
@@ -215,6 +215,8 @@ def admin(action=None):
 				settings['notification']['minutes'] = int(response['timeout'])
 
 		WriteSettings(settings)
+		event = "Settings Updated."
+		WriteLog(event)
 
 	uptime = os.popen('uptime').readline()
 

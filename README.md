@@ -9,8 +9,20 @@ Instead of using the WebIO libraries that Chris uses, I decided to implement thi
 
 Initially this project used Flask's native WSGI services without Gunicorn or nginx as a proxy.  However, I noticed that after some time, the app would become unresponsive.  After a little research, it appears that Flask's built in web server is for testing purposes only and shouldn't really be used in production.  With that said, I'm using Gunicorn and nginx to proxy web resquests.  This is simple enough to configure and setup, however I had to redesign the application without the threading libraries, due to conflicts with Gunicorn.  Instead, I am using two processes running concurrently (control.py and app.py).  Control handles all of the RasPi GPIO interfaces, while App handles the web routes.  They communicate through a .dat file (using pickle to simplify the format).  
 
+## Screenshots
+
+![Dashboard](static/img/screenshots/Screenshot_20170611-084236.jpg)
+![History](static/img/screenshots/Screenshot_20170611-084304.jpg)
+![Admin & Settings](static/img/screenshots/Screenshot_20170611-084315.jpg)
+![Admin 2](static/img/screenshots/Screenshot_20170611-084344.jpg)
+![Admin 3](static/img/screenshots/Screenshot_20170611-084356.jpg)
+
 ## Hardware Configuration
 See the parts list, hardware setup instructions here: (http://www.driscocity.com/idiots-guide-to-a-raspberry-pi-garage-door-opener/)
+
+![Chip, Relays and Garage Door Opener 1](static/img/screenshots/2017-06-11 11.40.22.jpg)
+![Chip, Relays and Garage Door Opener 2](static/img/screenshots/2017-06-11 11.40.33.jpg)
+![Magnetic Switch](static/img/screenshots/2017-06-11 11.40.02.jpg)
 
 ### GPIO Mapping
 CSID0 - Output Relay Control (Open / Close Garage Door)

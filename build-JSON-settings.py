@@ -14,6 +14,10 @@ settings['notification'] = {
 	'minutes': 0 # Magnetic Switch
 }
 
+settings['ifttt'] = {
+	'APIKey': '0'
+}
+
 json_data_string = json.dumps(settings)
 with open("settings.json", 'w') as settings_file:
     settings_file.write(json_data_string)

@@ -70,7 +70,7 @@
               </thead>
               <tbody>
                 {% for row in range(events) %}
-                  {% if "Button_Pressed" in door_history[row][2] %}
+                  {% if "Button" in door_history[row][2] %}
                     <tr class="success">
                   {% else %}
                     <tr>

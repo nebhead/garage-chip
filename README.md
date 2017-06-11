@@ -20,8 +20,34 @@ CSID2 - Output Relay Control Gate (Prevents spurious open/close events during po
 ## Software Installation:
 ###NOTE: The install.sh script doesn't work properly.  Please follow the below instructions to install instead.
 
-### Todo Setup Dedicated IP on Router (based on MACID/Hostname)
-### Todo Install Locale
+### Setup Wifi
+
+>sudo ifconfig
+
+Note the WLAN0 MAC address
+
+>sudo nmtui
+
+Select your network, password, activate
+
+>sudo nano /etc/hostname
+
+Replace Hostname with a unique hostname ('i.e. garage-chip')
+
+Configure your router's DHCP server to recognize the hostname, mac address, and assign a unique IP address to the device
+
+### CHIP No Limit Mode
+If you're like me and want run your chip from a sufficiently powered wall wart, then you'll probably want to set No-Limit mode on your CHIP.  This allows more than 900mA to be drawn from the USB port, in case the device needs more power (which it probably will from time to time).  Normally this limit is in place to protect your host PC's USB port, but since we're using this port to power the CHIP from the wall outlet, it's OK to remove this limit.  Here's how you permanently remove the limit:
+
+>sudo axp209 --no-limit
+>sudo systemctl enable no-limit
+
+### Install Locales and Set Timezone
+>sudo apt-get update && sudo apt-get install locales && sudo dpkg-reconfigure locales && sudo locale-gen
+
+You’ll get a large menu to select locales. Use the arrow keys to scroll down and spacebar to mark your location with an asterisk. It’s advised that you choose the location marked UTF8. Others are somewhat arcane edge cases! Hit return to continue.
+
+>sudo dpkg-reconfigure tzdata
 
 ### Install Python PIP, Flask, Gunicorn, nginx
 >sudo apt-get update
@@ -33,6 +59,15 @@ CSID2 - Output Relay Control Gate (Prevents spurious open/close events during po
 >git clone https://github.com/nebhead/garage-chip
 
 >sudo pip install flask
+
+### Install CHIP IO
+
+> sudo apt-get update
+> sudo apt-get install git build-essential python-dev python-pip flex bison chip-dt-overlays -y
+> git clone git://github.com/xtacocorex/CHIP_IO.git
+> cd CHIP_IO
+> sudo python setup.py install
+> cd ..
 
 ### Setup nginx to proxy to gunicorn
 >sudo rm /etc/nginx/sites-enabled/default # Delete default configuration
@@ -53,3 +88,19 @@ CSID2 - Output Relay Control Gate (Prevents spurious open/close events during po
 >sudo crontab mycron
 
 >rm mycron
+
+## Using GarageChip
+Setup the GarageChip options in the admin menu.  
+
+### Set up e-mail notifications
+TBD
+
+### Set IFTTT notifications
+If you are familiar with IFTTT then you can use this to setup an app notification on your smart phone.
+
+Use the [Maker WebHooks applet](https://ifttt.com/maker_webhooks) to setup [notifications](https://ifttt.com/if_notifications).  
+
+GarageChip uses the following event types:
+* GarageChip_Open_Alarm
+	* 'value1': minutes
+* GarageChip_Closed

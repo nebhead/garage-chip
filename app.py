@@ -117,6 +117,11 @@ def ReadSettings():
 		settings['notification'] = {
 			'minutes': 0 # Magnetic Switch
 		}
+
+		settings['ifttt'] = {
+			'APIKey': "0" # API Key for WebMaker IFTTT App notification
+		}
+
 		WriteSettings(settings)
 
 	return(settings)
@@ -213,6 +218,11 @@ def admin(action=None):
 			if(response['timeout']!=''):
 				print("Timeout: " + response['timeout'])
 				settings['notification']['minutes'] = int(response['timeout'])
+
+		if('iftttapi' in response):
+			if(response['iftttapi']!=''):
+				print("IFTTT API Key: " + response['iftttapi'])
+				settings['ifttt']['APIKey'] = response['iftttapi']
 
 		WriteSettings(settings)
 		event = "Settings Updated."

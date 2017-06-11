@@ -18,11 +18,13 @@ Initially this project used Flask's native WSGI services without Gunicorn or ngi
 ![Admin 3](static/img/screenshots/Screenshot_20170611-084356.jpg)
 
 ## Hardware Configuration
-See the parts list, hardware setup instructions here: (http://www.driscocity.com/idiots-guide-to-a-raspberry-pi-garage-door-opener/)
+See the parts list, hardware setup instructions here: [http://www.driscocity.com/idiots-guide-to-a-raspberry-pi-garage-door-opener/](http://www.driscocity.com/idiots-guide-to-a-raspberry-pi-garage-door-opener/)
 
-![Chip, Relays and Garage Door Opener 1](static/img/screenshots/2017-06-11 11.40.22.jpg)
-![Chip, Relays and Garage Door Opener 2](static/img/screenshots/2017-06-11 11.40.33.jpg)
-![Magnetic Switch](static/img/screenshots/2017-06-11 11.40.02.jpg)
+![Hardware 1]("static/img/screenshots/2017-06-11 11.40.22.jpg")
+
+![Hardware 2]("static/img/screenshots/2017-06-11 11.40.33.jpg")
+
+![Magnetic Switch]("static/img/screenshots/2017-06-11 11.40.02.jpg")
 
 ### GPIO Mapping
 CSID0 - Output Relay Control (Open / Close Garage Door)

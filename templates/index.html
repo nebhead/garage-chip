@@ -62,11 +62,11 @@
       <div class="jumbotron text-center">
         {% if state %}
           <form name="input" action="/button">
-            <button type="submit" class="btn btn-lg btn-danger">Open / Close Garage Door</button>
+            <button type="submit" class="btn btn-default"><img src="{{ url_for('static', filename='img/icon-open-red.png') }}" alt="Press to Close" width="144" height="144"></button>
           </form>
         {% else %}
           <form name="input" action="/button">
-            <button type="submit" class="btn btn-lg btn-success">Open / Close Garage Door</button>
+						<button type="submit" class="btn btn-default"><img src="{{ url_for('static', filename='img/icon-closed-green.png') }}" alt="Press to Open" width="144" height="144"></button>
           </form>
         {% endif %}
       </div>

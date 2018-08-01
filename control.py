@@ -33,32 +33,49 @@ GPIO.setup("CSID1", GPIO.IN) # Setup Magnetic Switch on GPIO1  (set pull down)
 timer_start = 0 # Initialize timer_start variable, set to 0
 notify_on_close = False # Initialize the flag for notifying that the door has closed
 
-def SendNotification(settings,notifyevent):
+def SndEmail(settings, notifyevent):
+	# WriteLog("[DEBUG]: SndEmail Function. " + notifyevent)
+	now = datetime.datetime.now()
 
 	if notifyevent == "GarageChip_Open_Alarm":
-		try:
-			fromaddr = settings['email']['FromEmail']
-			toaddr = settings['email']['ToEmail']
+		notifymessage = "GarageCHIP wants you to know that your garage door has been open for " + str(settings['notification']['minutes']) + " minutes at " + str(now)
+		subjectmessage = "GarageCHIP: Door Open for " + str(settings['notification']['minutes']) + " Minutes"
+	elif notifyevent == "GarageChip_Closed":
+		notifymessage = "GarageCHIP wants you to know that your garage door was closed at " + str(now)
+		subjectmessage = "GarageCHIP: Closed at " + str(now)
+	else:
+		notifymessage = "Whoops! GarageCHIP had the following unhandled notify event: " + notifyevent + " at " + str(now)
+		subjectmessage = "GarageCHIP: Unknown Notification at " + str(now)
 
-			msg = MIMEMultipart()
-			msg['From'] = fromaddr
-			msg['To'] = toaddr
-			msg['Subject'] = "GarageCHIP: Door Open for " + str(settings['notification']['minutes']) + " Minutes"
-			now = datetime.datetime.now()
-			body = "GarageCHIP wants you to know that your garage door has been open for " + str(settings['notification']['minutes']) + " minutes at " + str(now)
-			msg.attach(MIMEText(body, 'plain'))
+	try:
+		fromaddr = settings['email']['FromEmail']
+		toaddr = settings['email']['ToEmail']
 
-			server = smtplib.SMTP(settings['email']['SMTPServer'], settings['email']['SMTPPort'])
-			server.starttls()
-			server.login(fromaddr, settings['email']['Password'])
-			text = msg.as_string()
-			server.sendmail(fromaddr, toaddr, text)
-			server.quit()
-			event = "Door open for " + str(settings['notification']['minutes']) + " minutes.  E-mail notification sent."
-			WriteLog(event)
-		except():
-			WriteLog("E-mail notification failed.")
+		msg = MIMEMultipart()
+		msg['From'] = fromaddr
+		msg['To'] = toaddr
+		msg['Subject'] = subjectmessage
+		body = notifymessage
+		msg.attach(MIMEText(body, 'plain'))
 
+		server = smtplib.SMTP(settings['email']['SMTPServer'], settings['email']['SMTPPort'])
+		server.starttls()
+		server.login(fromaddr, settings['email']['Password'])
+		text = msg.as_string()
+		server.sendmail(fromaddr, toaddr, text)
+		server.quit()
+		event = subjectmessage + ". E-mail notification sent."
+		WriteLog(event)
+	except():
+		WriteLog("E-mail notification failed.")
+
+	return()
+
+def SendNotification(settings,notifyevent):
+	# WriteLog("[DEBUG]: SendNotification Function. " + notifyevent)
+	if notifyevent == "GarageChip_Open_Alarm":
+		if settings['email']['FromEmail'] != "":
+			SndEmail(settings, notifyevent)
 		if settings['ifttt']['APIKey'] != "0":
 			key = settings['ifttt']['APIKey']
 			url = 'https://maker.ifttt.com/trigger/' + notifyevent + '/with/key/' + key
@@ -73,14 +90,17 @@ def SendNotification(settings,notifyevent):
 				WriteLog("IFTTT Notification Failed: " + notifyevent)
 
 	if (notifyevent == "GarageChip_Closed") and (settings['ifttt']['APIKey'] != "0"):
-		key = settings['ifttt']['APIKey']
-		url = 'https://maker.ifttt.com/trigger/' + notifyevent + '/with/key/' + key
-		try:
-			request = urllib2.Request(url)
-			response = urllib2.urlopen(request)
-			WriteLog("IFTTT Notification Success: " + notifyevent)
-		except:
-			WriteLog("IFTTT Notification Failed: " + notifyevent)
+		if settings['email']['FromEmail'] != "":
+			SndEmail(settings, notifyevent)
+		if settings['ifttt']['APIKey'] != "0":
+			key = settings['ifttt']['APIKey']
+			url = 'https://maker.ifttt.com/trigger/' + notifyevent + '/with/key/' + key
+			try:
+				request = urllib2.Request(url)
+				response = urllib2.urlopen(request)
+				WriteLog("IFTTT Notification Success: " + notifyevent)
+			except:
+				WriteLog("IFTTT Notification Failed: " + notifyevent)
 
 	return()
 
@@ -219,12 +239,14 @@ while True:
 	states = CheckDoorState(ReadStates(),settings)
 
 	if (states['inputs']['switch'] == False) and (notify_on_close == True):
+		# WriteLog("[DEBUG]: Garage Door Closed. Calling SendNotification Function")
 		notify_on_close = False
 		notifyevent = "GarageChip_Closed"
 		SendNotification(settings,notifyevent)
 
 	if (timer_start > 0):
 		if(time.time() > (timer_start + (settings['notification']['minutes']*60))):
+			# WriteLog("[DEBUG]: Garage open for 10 mins. Calling SendNotification Function")
 			notifyevent = "GarageChip_Open_Alarm"
 			SendNotification(settings,notifyevent)
 			timer_start = 0 # Stop the timer, stop from sending another notification
